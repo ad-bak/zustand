@@ -5,7 +5,7 @@ import { shallow } from "zustand/shallow";
 import { devtools, persist } from "zustand/middleware";
 
 const store = (set) => ({
-  tasks: [{ title: "test task", state: "ONGOING" }],
+  tasks: [],
   draggedTask: null,
   addTask: (title, state) =>
     set(
@@ -14,25 +14,45 @@ const store = (set) => ({
       "addTask"
     ),
   deleteTask: (title) =>
-    set((store) => ({
-      tasks: store.tasks.filter((task) => task.title !== title),
-    })),
-  setDraggedTask: (task) => set({ draggedTask: task }),
+    set(
+      (store) => ({
+        tasks: store.tasks.filter((task) => task.title !== title),
+      }),
+      false,
+      "deleteTask"
+    ),
+  setDraggedTask: (task) => set({ draggedTask: task }, false, "setDraggedTask"),
   moveTask: (title, state) =>
-    set((store) => ({
-      tasks: store.tasks.map((task) =>
-        task.title === title ? { title, state } : task
-      ),
-    })),
+    set(
+      (store) => ({
+        tasks: store.tasks.map((task) =>
+          task.title === title ? { title, state } : task
+        ),
+      }),
+      false,
+      "moveTask"
+    ),
 });
 
+const log = (config) => (set, get, api) =>
+  config(
+    (...args) => {
+      console.log(args);
+      set(...args);
+    },
+    get,
+    api
+  );
+
 export const useStore = create(
-  devtools(
-    persist(store, {
-      name: "tasks-store",
-      getStorage: () => localStorage,
-    }),
-    { name: "tasks-store-devtools" }
-  ),
-  shallow
+  log(
+    devtools(
+      persist(store, {
+        name: "tasks-store",
+        getStorage: () => localStorage,
+      }),
+      { name: "tasks-store-devtools" }
+    ),
+    shallow
+  )
 );
