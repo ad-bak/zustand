@@ -17,7 +17,6 @@ export default function Column({ state }) {
   const draggedTask = useStore((store) => store.draggedTask);
   const [drop, setDrop] = useState(false);
 
-  console.log("tasks", tasks);
   return (
     <div
       className={classNames("column", { drop })}

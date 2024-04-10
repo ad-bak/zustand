@@ -2,14 +2,18 @@ import { create } from "zustand";
 
 import { shallow } from "zustand/shallow";
 
-import { devtools, persist } from "zustand/middleware";
+import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
+import { produce } from "immer";
 
 const store = (set) => ({
   tasks: [],
   draggedTask: null,
+  tasksInOngoing: 0,
   addTask: (title, state) =>
     set(
-      (store) => ({ tasks: [...store.tasks, { title, state }] }),
+      produce((store) => {
+        store.tasks.push({ title, state });
+      }),
       false,
       "addTask"
     ),
@@ -45,14 +49,26 @@ const log = (config) => (set, get, api) =>
   );
 
 export const useStore = create(
-  log(
-    devtools(
-      persist(store, {
-        name: "tasks-store",
-        getStorage: () => localStorage,
-      }),
-      { name: "tasks-store-devtools" }
-    ),
-    shallow
+  subscribeWithSelector(
+    log(
+      devtools(
+        persist(store, {
+          name: "tasks-store",
+          getStorage: () => localStorage,
+        }),
+        { name: "tasks-store-devtools" }
+      ),
+      shallow
+    )
   )
+);
+
+useStore.subscribe(
+  (store) => store.tasks,
+  (newTasks) => {
+    useStore.setState({
+      tasksInOngoing: newTasks.filter((task) => task.state === "ONGOING")
+        .length,
+    });
+  }
 );
