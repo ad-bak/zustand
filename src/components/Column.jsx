@@ -2,6 +2,7 @@ import Task from "./Task";
 import "./Column.css";
 import { useStore } from "../store";
 import { useState } from "react";
+import classNames from "classnames";
 
 export default function Column({ state }) {
   const tasks = useStore((store) =>
@@ -12,17 +13,26 @@ export default function Column({ state }) {
 
   const addTask = useStore((store) => store.addTask);
   const setDraggetTask = useStore((store) => store.setDraggedTask);
+  const moveTask = useStore((store) => store.moveTask);
+  const draggedTask = useStore((store) => store.draggedTask);
+  const [drop, setDrop] = useState(false);
 
   console.log("tasks", tasks);
   return (
     <div
-      className="column"
+      className={classNames("column", { drop })}
       onDragOver={(e) => {
+        setDrop(true);
         e.preventDefault();
       }}
-      onDrop={(e) => {
+      onDragLeave={(e) => {
+        setDrop(false);
         e.preventDefault();
+      }}
+      onDrop={() => {
+        moveTask(draggedTask.title, state);
         setDraggetTask(null);
+        setDrop(false);
       }}
     >
       <div className="titleWrapper">
